@@ -15,6 +15,13 @@ const (
 )
 
 func main() {
+	simpleRpcClient()
+	//serverSideStreamingRpcClient()
+	//clientSideStreamingRpcClient()
+	//biDirectionalStreamingRpcClient()
+}
+
+func simpleRpcClient() {
 	// Setting up a connection to the server.
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
@@ -27,46 +34,70 @@ func main() {
 
 	// =========================================
 	// Add Order
-	/*	order1 := pb.Order{
-			Id:          "101",
-			Items:       []string{"test order1", "test order2"},
-			Destination: "shenzhen",
-			Price:       2300.01,
-		}
-		res, err := client.AddOrder(ctx, &order1)
-		if err != nil {
-			log.Fatalln("AddOrder Fail err :", err)
-		}
-		if res != nil {
-			log.Println("AddOrder Response -> ", res.Value)
+	order1 := pb.Order{
+		Id:          "101",
+		Items:       []string{"test order1", "test order2"},
+		Destination: "shenzhen",
+		Price:       2300.01,
+	}
+	res, err := client.AddOrder(ctx, &order1)
+	if err != nil {
+		log.Fatalln("AddOrder Fail err :", err)
+	}
+	if res != nil {
+		log.Println("AddOrder Response -> ", res.Value)
+	}
+
+	// Get Order
+	retrievedOrder, err := client.GetOrder(ctx, &wrappers.StringValue{Value: "101"})
+	if err != nil {
+		log.Println("GetOrder fail err :", err)
+	}
+	log.Print("GetOrder Response -> : ", retrievedOrder)
+
+}
+
+func serverSideStreamingRpcClient() {
+	// Setting up a connection to the server.
+	conn, err := grpc.Dial(address, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	defer conn.Close()
+	client := pb.NewOrderManagementClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	// =========================================
+	// Search Order : Server streaming
+	searchStream, _ := client.SearchOrders(ctx, &wrappers.StringValue{Value: "Google"})
+	for {
+		searchOrder, err := searchStream.Recv()
+		if err == io.EOF {
+			log.Print("EOF")
+			break
 		}
 
-		// Get Order
-		retrievedOrder, err := client.GetOrder(ctx, &wrappers.StringValue{Value: "101"})
-		if err != nil {
-			log.Println("GetOrder fail err :", err)
+		if err == nil {
+			log.Print("Search Result : ", searchOrder)
 		}
-		log.Print("GetOrder Response -> : ", retrievedOrder)
+	}
+}
 
-
-		// =========================================
-		// Search Order : Server streaming
-		searchStream, _ := client.SearchOrders(ctx, &wrappers.StringValue{Value: "Google"})
-		for {
-			searchOrder, err := searchStream.Recv()
-			if err == io.EOF {
-				log.Print("EOF")
-				break
-			}
-
-			if err == nil {
-				log.Print("Search Result : ", searchOrder)
-			}
-		}*/
+func clientSideStreamingRpcClient() {
+	// Setting up a connection to the server.
+	conn, err := grpc.Dial(address, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	defer conn.Close()
+	client := pb.NewOrderManagementClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
 
 	// =========================================
 	// Update Orders : Client streaming
-/*	updOrder1 := pb.Order{Id: "102", Items: []string{"Google Pixel 3A", "Google Pixel Book"}, Destination: "Mountain View, CA", Price: 1100.00}
+	updOrder1 := pb.Order{Id: "102", Items: []string{"Google Pixel 3A", "Google Pixel Book"}, Destination: "Mountain View, CA", Price: 1100.00}
 	updOrder2 := pb.Order{Id: "103", Items: []string{"Apple Watch S4", "Mac Book Pro", "iPad Pro"}, Destination: "San Jose, CA", Price: 2800.00}
 	updOrder3 := pb.Order{Id: "104", Items: []string{"Google Home Mini", "Google Nest Hub", "iPad Mini"}, Destination: "Mountain View, CA", Price: 2200.00}
 
@@ -95,9 +126,19 @@ func main() {
 	if err != nil {
 		log.Fatalf("%v.CloseAndRecv() got error %v, want %v", updateStream, err, nil)
 	}
-	log.Printf("Update Orders Res : %s", updateRes)*/
+	log.Printf("Update Orders Res : %s", updateRes)
+}
 
-
+func biDirectionalStreamingRpcClient() {
+	// Setting up a connection to the server.
+	conn, err := grpc.Dial(address, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	defer conn.Close()
+	client := pb.NewOrderManagementClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
 	// =========================================
 	// Process Order : Bi-di streaming scenario
 	streamProcOrder, err := client.ProcessOrders(ctx)
