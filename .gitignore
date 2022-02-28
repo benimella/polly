@@ -1,0 +1,8 @@
+main
+grpc.exe
+grpc/app/tt
+pb_file
+pattern
+proto
+tmp
+.idea

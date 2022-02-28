@@ -1,0 +1,1 @@
+protoc --proto_path=./../proto --go_out=../../ order_request.proto
